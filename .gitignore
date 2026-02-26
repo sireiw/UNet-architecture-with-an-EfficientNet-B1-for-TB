@@ -27,7 +27,7 @@ coverage.xml
 # Project specific
 output/
 dataset/
-$# data/
+# data/
 *.dcm
 *.npy
 *.pt
