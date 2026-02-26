@@ -58,22 +58,22 @@ The core pipeline has been abstracted out of monolithic Jupyter notebooks into a
 
 The `2phase-loadmodel-completedemo.ipynb` Jupyter notebook serves as the high-level demonstration for consuming the `src/` modules. Launch the notebook and execute the cells to begin the dual-phase fine-tuning procedure.
 
-## Dataset Instructions
+## Data Requirements
 
 Because medical image datasets are massive in size, they are **not** included in this repository. You must download them manually to execute the training code.
 
 By default, the pipeline expects the datasets to be located at `/kaggle/input/` (as configured in `src/config.py`). If you are running locally, either create this mock directory structure or edit the paths in `src/config.py`.
 
 1. **TBX11K Dataset**
-   - **Download:** Search for "TBX11K" or "TBX11K Simplified" on Kaggle.
+   - **Download:** [TBX11K Simplified on Kaggle](https://www.kaggle.com/datasets/vuppalaadithyasairam/tbx11k-simplified)
    - **Placement:** `/kaggle/input/tbx11k-simplified/` or `/kaggle/input/tbx11k/`
 
 2. **NIH Chest X-ray Dataset**
-   - **Download:** Search for "NIH Chest X-rays" on Kaggle.
+   - **Download:** [NIH Chest X-rays on Kaggle](https://www.kaggle.com/datasets/nih-chest-xrays/data)
    - **Placement:** Ensure the raw DICOM/PNG files and `Data_Entry_2017.csv` metadata file are placed under the accessible dataset path.
 
 3. **RSNA / Shenzhen Hospital / Real World Data**
-   - **Download:** Search for "Real CXR" or the respective source on Kaggle.
+   - **Download:** [RSNA Pneumonia Detection Challenge](https://www.kaggle.com/c/rsna-pneumonia-detection-challenge/data) or local hospital datasets.
    - **Placement:** `/kaggle/input/realcxr2/chest/` (as pointed to by `REAL_WORLD_PATH` in the configuration).
 
 ## Kaggle Environment Compatibility
