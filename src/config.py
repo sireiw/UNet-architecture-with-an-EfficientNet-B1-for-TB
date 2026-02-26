@@ -1,31 +1,31 @@
-import torch
 import os
+import torch
 
 class Config:
     """Fixed configuration for few-shot learning (30 samples/class)"""
     
     # ===== PATHS =====
-    DATASET_PATH = '/kaggle/working/chest_xray_4classes'
-    SEGMENTATION_PATH_1 = '/kaggle/input/chest-x-ray-lungs-segmentation/Chest-X-Ray/Chest-X-Ray'
-    SEGMENTATION_PATH_2 = '/kaggle/input/chest-xray-masks-and-labels/Lung Segmentation'
-    OUTPUT_DIR = '/kaggle/working/output'
-    SEGMENTED_IMAGES_DIR = '/kaggle/working/segmented_images'
-    PREPROCESSED_DATASET_PATH = '/kaggle/working/preprocessed_dataset'
-    SPLIT_DATASET_PATH = '/kaggle/working/split_dataset'
+    DATASET_PATH = 'chest_xray_4classes'
+    SEGMENTATION_PATH_1 = 'input/chest-x-ray-lungs-segmentation/Chest-X-Ray/Chest-X-Ray'
+    SEGMENTATION_PATH_2 = 'input/chest-xray-masks-and-labels/Lung Segmentation'
+    OUTPUT_DIR = 'output'
+    SEGMENTED_IMAGES_DIR = 'segmented_images'
+    PREPROCESSED_DATASET_PATH = 'preprocessed_dataset'
+    SPLIT_DATASET_PATH = 'split_dataset'
     MISCLASS_DIR = os.path.join(OUTPUT_DIR, 'misclassified')
     
     # ===== REAL-WORLD DATA PATHS =====
-    REAL_WORLD_PATH = '/kaggle/input/realcxr2/chest'
+    REAL_WORLD_PATH = 'input/realcxr2/chest'
     USE_REAL_WORLD_FINETUNING = True
-    REAL_WORLD_SEGMENTED_DIR = '/kaggle/working/real_world_segmented'
-    REAL_WORLD_SAMPLES_PER_CLASS = None  # Use ALL available real data (was 30)
+    REAL_WORLD_SEGMENTED_DIR = 'real_world_segmented'
+    REAL_WORLD_SAMPLES_PER_CLASS = None  # Use ALL available real data
     
     # ===== OFFLINE AUGMENTATION =====
     USE_OFFLINE_AUGMENTATION = True   # Enable offline augmentation
     OFFLINE_AUG_COPIES_PER_IMAGE = 10 # More copies for small dataset
     SAVE_AUGMENTED_IMAGES = True
-    AUGMENTED_DATA_DIR = '/kaggle/working/augmented_real_world'
-    USE_STRONGER_REAL_TRANSFORMS = True  # NEW: Use stronger transforms for real data
+    AUGMENTED_DATA_DIR = 'augmented_real_world'
+    USE_STRONGER_REAL_TRANSFORMS = True  # Use stronger transforms for real data
     
     # ===== SEGMENTATION OPTIONS =====
     USE_SEGMENTATION_1 = True
@@ -45,29 +45,29 @@ class Config:
     PIN_MEMORY = True
     
     # ===== FINE-TUNING PARAMETERS (TB RESCUE CHANGES) =====
-    FINETUNE_EPOCHS = 30         # Up from 30 (Longer training)
-    FINETUNE_LR_BACKBONE = 1e-5  # Down from 2e-5 (Gentler LR)
-    FINETUNE_LR_CLASSIFIER = 2e-5 # Down from 5e-5 (Gentler LR)
+    FINETUNE_EPOCHS = 30         
+    FINETUNE_LR_BACKBONE = 1e-5  
+    FINETUNE_LR_CLASSIFIER = 2e-5 
     FINETUNE_BATCH_SIZE = 16
     FREEZE_BACKBONE_RATIO = 0.90
     FINETUNE_WEIGHT_DECAY = 1e-4
     
-    # ===== TWO-STREAM MIXING (MORE REAL DATA) =====
+    # ===== TWO-STREAM MIXING =====
     USE_TWO_STREAM_MIXING = True
-    INITIAL_SYN_RATIO = 0.5      # Down from 0.7 (Start with more real)
-    FINAL_SYN_RATIO = 0.2        # Down from 0.3 (End with even more real)
-    RATIO_TRANSITION_EPOCH = 10  # Down from 20 (Faster transition to real)
+    INITIAL_SYN_RATIO = 0.5      
+    FINAL_SYN_RATIO = 0.2        
+    RATIO_TRANSITION_EPOCH = 10  
     
-    # ===== KNOWLEDGE DISTILLATION (FIXED) =====
+    # ===== KNOWLEDGE DISTILLATION =====
     USE_KNOWLEDGE_DISTILLATION = True
     KD_TEMPERATURE = 5.0
     KD_ALPHA_REAL = 0.0
     KD_ALPHA_SYN = 0.7
-    KD_REAL_LOSS_WEIGHT = 1.0  # FIXED: Reduced from 2.0
+    KD_REAL_LOSS_WEIGHT = 1.0  
     
     # ===== TB RESCUE =====
-    TB_OVERSAMPLE_FACTOR = 1.5  # FIXED: Reduced from 3 (no oversample)
-    MIN_TB_RECALL = 0.40        # NEW: TB Guardrail
+    TB_OVERSAMPLE_FACTOR = 1.5  
+    MIN_TB_RECALL = 0.40        
     
     # ===== ADAPTIVE BATCH NORM =====
     USE_ADAPTIVE_BN = True
@@ -80,19 +80,19 @@ class Config:
     
     # ===== TTA PARAMETERS =====
     USE_TTA = True
-    USE_TTA_REAL_WORLD = False  # NEW: Disable TTA for real-world (may hurt)
-    TTA_AUGMENTATIONS = 4  # FIXED: Reduced from 5
+    USE_TTA_REAL_WORLD = False  
+    TTA_AUGMENTATIONS = 4  
     
     # ===== DEVICE =====
-    DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'mps' if torch.backends.mps.is_available() else 'cpu')
     RANDOM_SEED = 42
     
     # ===== SPLIT RATIOS =====
     TRAIN_RATIO = 0.7
     VAL_RATIO = 0.15
     TEST_RATIO = 0.15
-    REAL_WORLD_VAL_RATIO = 0.20 # Smaller val = more train
-    FINETUNE_KFOLD_SPLITS = 5   # More folds = more stable + ensemble
+    REAL_WORLD_VAL_RATIO = 0.20 
+    FINETUNE_KFOLD_SPLITS = 5   
     
     # ===== CLASS CONFIGURATION =====
     CLASS_NAMES = ['normal', 'tuberculosis', 'pneumonia', 'lung_cancer']
@@ -116,19 +116,19 @@ class Config:
     MIN_DELTA = 1e-4
     
     # ===== REGULARIZATION =====
-    DROPOUT_RATE = 0.4  # FIXED: Reduced from 0.6
+    DROPOUT_RATE = 0.4  
     WEIGHT_DECAY = 1e-3
     
     # ===== AUGMENTATION =====
     EXTREME_AUGMENTATION = False
     CLASS_SPECIFIC_AUGMENTATION = True
     
-    # ===== IMPROVEMENTS (TB RESCUE CHANGES) =====
+    # ===== IMPROVEMENTS =====
     USE_CLASS_WEIGHTS = True
-    LABEL_SMOOTHING = 0.1  # FIXED: Increased from 0.05
+    LABEL_SMOOTHING = 0.1  
     MIXUP_ALPHA = 0.2
     MIXUP_PROB = 0.30
-    MIXUP_PROB_FINETUNE = 0.20 # Up from 0.0 (Re-enabled Mixup)
+    MIXUP_PROB_FINETUNE = 0.20 
     USE_FOCAL_LOSS = True
     FOCAL_LOSS_ALPHA = 0.75
     FOCAL_LOSS_GAMMA = 2.5
@@ -141,7 +141,7 @@ class Config:
     MORPH_KERNEL = 3
     
     # ===== EMA =====
-    USE_EMA = True  # FIXED: Enabled
+    USE_EMA = True  
     EMA_DECAY = 0.999
     
     # ===== SAMPLING =====
@@ -152,25 +152,25 @@ class Config:
     USE_PER_CLASS_THRESHOLDS = True
     USE_TEMPERATURE_SCALING = True
     
-    # ===== GUARDRAILS (FIXED) =====
+    # ===== GUARDRAILS =====
     MAX_SYNTHETIC_F1_DROP = 0.15
     
-    # ===== DOMAIN ALIGNMENT (ENHANCED) =====
+    # ===== DOMAIN ALIGNMENT =====
     USE_CORAL_LOSS = True
-    CORAL_LAMBDA = 0.3       # Up from 0.15 (stronger alignment)
-    CORAL_WARMUP_EPOCHS = 3  # Faster warmup
-    USE_MMD_LOSS = True      # NEW: Additional MMD loss
-    MMD_LAMBDA = 0.2         # NEW: MMD weight
-    USE_CONTRASTIVE = True   # NEW: Supervised contrastive
-    CONTRASTIVE_LAMBDA = 0.1 # NEW: Contrastive weight
-    CONTRASTIVE_TEMP = 0.1   # NEW: Temperature
+    CORAL_LAMBDA = 0.3       
+    CORAL_WARMUP_EPOCHS = 3  
+    USE_MMD_LOSS = True      
+    MMD_LAMBDA = 0.2         
+    USE_CONTRASTIVE = True   
+    CONTRASTIVE_LAMBDA = 0.1 
+    CONTRASTIVE_TEMP = 0.1   
     
-    # ===== GRADIENT ACCUMULATION (TB RESCUE CHANGES) =====
-    ACCUM_STEPS = 4  # Up from 2
+    # ===== GRADIENT ACCUMULATION =====
+    ACCUM_STEPS = 4  
     
-    # ===== PREADAPTATION (MORE REAL DATA FROM START) =====
-    PREADAPT_EPOCHS = 3          # Shorter pre-adaptation
-    PREADAPT_REAL_RATIO = 0.3    # Up from 0.1 (30% real in preadapt)
+    # ===== PREADAPTATION =====
+    PREADAPT_EPOCHS = 3          
+    PREADAPT_REAL_RATIO = 0.3    
     
     # ===== ANALYSIS =====
     SAVE_MISCLASSIFIED = True
@@ -178,8 +178,16 @@ class Config:
     ANALYSIS_SAMPLE_SIZE = 200
 
     @classmethod
-    def create_dirs(cls):
-        """Create necessary directories."""
+    def create_dirs(cls, base_path: str = "."):
+        """Create necessary directories relative to base_path."""
+        cls.OUTPUT_DIR = os.path.join(base_path, cls.OUTPUT_DIR)
+        cls.SEGMENTED_IMAGES_DIR = os.path.join(base_path, cls.SEGMENTED_IMAGES_DIR)
+        cls.PREPROCESSED_DATASET_PATH = os.path.join(base_path, cls.PREPROCESSED_DATASET_PATH)
+        cls.SPLIT_DATASET_PATH = os.path.join(base_path, cls.SPLIT_DATASET_PATH)
+        cls.MISCLASS_DIR = os.path.join(base_path, cls.MISCLASS_DIR)
+        cls.REAL_WORLD_SEGMENTED_DIR = os.path.join(base_path, cls.REAL_WORLD_SEGMENTED_DIR)
+        cls.AUGMENTED_DATA_DIR = os.path.join(base_path, cls.AUGMENTED_DATA_DIR)
+        
         for dir_path in [cls.OUTPUT_DIR, cls.SEGMENTED_IMAGES_DIR, cls.PREPROCESSED_DATASET_PATH, 
                          cls.SPLIT_DATASET_PATH, cls.MISCLASS_DIR, cls.REAL_WORLD_SEGMENTED_DIR, 
                          cls.AUGMENTED_DATA_DIR]:
