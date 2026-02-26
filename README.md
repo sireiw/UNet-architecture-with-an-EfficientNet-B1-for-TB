@@ -2,6 +2,18 @@
 
 This repository contains a professional, modular PyTorch pipeline designed to train a highly robust model for **Tuberculosis (TB)** detection from Chest X-Rays. It employs a 3-phase training architecture emphasizing domain robustness, knowledge distillation, and "TB rescue" oversampling logic.
 
+## Abstract
+
+**Objective:** To develop and evaluate the performance of an Artificial Intelligence (AI) system for classifying four lung conditions from chest X-rays: Normal, Tuberculosis (TB), Pneumonia, and Lung Cancer (Nodule/Mass). Performance was evaluated using statistical metrics including Accuracy, Precision, Specificity, and F1-score.
+
+**Methods:** Chest X-ray images were collected from seven standard databases (NIH Chest X-ray, RSNA, VinBigData, TBX11K, NIAID, Shenzhen) and a specific dataset from Bhumibol Adulyadej Hospital. Data underwent quality control and balancing. The development process under the "TB-Rescue" framework consisted of three phases: 1) Lung Segmentation using U-Net architecture, 2) Learning from synthetic data, and 3) Fine-tuning with real-world data. Specifically, a local dataset of 286 images from Bhumibol Adulyadej Hospital (100 Normal, 73 TB, 86 Pneumonia, and 27 Lung Cancer) was utilized to adapt the model to the radiographic characteristics of Thai and Asian populations. The study integrated Knowledge Distillation techniques with advanced loss functions (CORAL Loss, Supervised Contrastive Learning) and employed 5-Fold Cross-Validation alongside mixed Data Augmentation.
+
+**Results:** The baseline model achieved an accuracy of 81.00% when tested on public datasets. However, when applied to clinical real-world data, significant domain shift caused accuracy to drop to 34.97%. Following the fine-tuning process, the model demonstrated significantly improved adaptation to Thai radiographic characteristics, with accuracy on real-world data increasing from 34.97% to 63.00%. Regarding Tuberculosis classification, the fine-tuned model maintained high performance, achieving an F1-Score of 0.80, a Sensitivity of 80.00%, and a Specificity of 93.00%.
+
+**Conclusion:** While the baseline model exhibited high potential on standard datasets, its practical application was limited by domain shift. The fine-tuning process proved critical in mitigating this issue, recovering model performance for clinical application in Thailand. Despite the occurrence of catastrophic forgetting regarding public data, the model demonstrated superior domain adaptation to real-world data, which is essential for the practical deployment of AI in clinical settings.
+
+**Keywords:** Artificial Intelligence, Lung Disease Classification, Chest X-ray, Tuberculosis, U-Net, EfficientNet-B1, Domain Shift, Domain Adaptation
+
 ## Architecture
 
 The previous monolithic Jupyter Notebook has been fully refactored into a scalable Python package under `src/`.
