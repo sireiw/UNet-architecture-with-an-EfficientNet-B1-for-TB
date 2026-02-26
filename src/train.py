@@ -1,11 +1,24 @@
 import torch
+import torch.nn as nn
+from torch.utils.data import DataLoader
 from tqdm import tqdm
 import numpy as np
 from torch.cuda.amp import autocast
+from typing import Tuple, List, Union
+from .config import Config
 
-def adaptive_bn_update(model, real_loader, device, num_passes=2):
-    """Update BatchNorm statistics on real-world data"""
+def adaptive_bn_update(model: nn.Module, real_loader: DataLoader, device: torch.device, num_passes: int = 2) -> None:
+    """Update BatchNorm statistics exclusively on real-world data target domain.
     
+    Disables gradients and explicitly forces forward passes to allow Batch Normalization
+    modules to recalibrate their running mean and variance against the new target distribution.
+    
+    Args:
+        model (nn.Module): The classification neural network.
+        real_loader (DataLoader): An iterable providing real-world target domain samples.
+        device (torch.device): Compute hardware accelerator constraint.
+        num_passes (int, optional): Number of sweeps over the distribution. Defaults to 2.
+    """
     print(f"\n🔧 Running Adaptive BatchNorm update ({num_passes} passes)...")
     model.train()
     
@@ -29,11 +42,24 @@ def adaptive_bn_update(model, real_loader, device, num_passes=2):
     print("  ✅ BatchNorm statistics updated on real-world data")
 
 
-def tta_predict(model, dataloader, config, n_tta=4):
-    """Test-Time Augmentation - FIXED to use only geometric transforms"""
+def tta_predict(model: nn.Module, dataloader: DataLoader, config: Config, n_tta: int = 4) -> Tuple[np.ndarray, np.ndarray]:
+    """Execute prediction using Test-Time Augmentation (TTA).
+    
+    Ensembles uncalibrated predictions across multiple geometric variations of the identical
+    underlying input to yield a statistically stable output classification prediction.
+    
+    Args:
+        model (nn.Module): Primary classification architecture.
+        dataloader (DataLoader): Inference or testing iterable dataset.
+        config (Config): Configuration holding hardware device pointers and hyperparameters.
+        n_tta (int, optional): The number of concurrent augmentations to accumulate. Defaults to 4.
+        
+    Returns:
+        Tuple[np.ndarray, np.ndarray]: A parallel structured tuple of predicted class outputs and actual labels.
+    """
     model.eval()
-    all_preds = []
-    all_labels = []
+    all_preds: List[int] = []
+    all_labels: List[int] = []
     
     with torch.no_grad():
         for batch in tqdm(dataloader, desc='TTA Inference'):

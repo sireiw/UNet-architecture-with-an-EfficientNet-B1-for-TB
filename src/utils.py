@@ -5,17 +5,26 @@ import pydicom
 from PIL import Image
 import numpy as np
 import cv2
+from typing import Tuple, Optional, Set, Dict
+
 from .config import Config
 
-DEBUG = False
-quality_stats = {}
-image_hashes = set()
-MIN_IMAGE_SIZE = (224, 224)
-MAX_IMAGE_SIZE = (4096, 4096)
-CHECK_DUPLICATES = True
+DEBUG: bool = False
+quality_stats: Dict[str, int] = {}
+image_hashes: Set[str] = set()
+MIN_IMAGE_SIZE: Tuple[int, int] = (224, 224)
+MAX_IMAGE_SIZE: Tuple[int, int] = (4096, 4096)
+CHECK_DUPLICATES: bool = True
 
-def get_image_hash(image_path):
-    """Generate MD5 hash of image content for duplicate detection"""
+def get_image_hash(image_path: Path) -> Optional[str]:
+    """Generate MD5 hash of image content for duplicate detection.
+    
+    Args:
+        image_path (str): The absolute or relative path to the image file.
+        
+    Returns:
+        Optional[str]: The MD5 hexadecimal string if successful, else None.
+    """
     try:
         with open(image_path, 'rb') as f:
             return hashlib.md5(f.read()).hexdigest()
@@ -24,8 +33,15 @@ def get_image_hash(image_path):
             print(f"Error hashing {image_path}: {e}")
         return None
 
-def validate_image(image_path):
-    """Validate image quality and properties"""
+def validate_image(image_path: Path) -> Tuple[bool, str]:
+    """Validate image quality and dimension properties.
+    
+    Args:
+        image_path (str): Path indicating a '.dcm' dicom or standard PIL image.
+        
+    Returns:
+        Tuple[bool, str]: A boolean indicating validity and a descriptive status string.
+    """
     global quality_stats
     try:
         if image_path.suffix.lower() in ['.dcm', '.dicom']:
@@ -50,8 +66,15 @@ def validate_image(image_path):
         quality_stats["Corrupted"] = quality_stats.get("Corrupted", 0) + 1
         return False, f"Error: {str(e)}"
 
-def check_duplicate(image_path):
-    """Check if image is a duplicate"""
+def check_duplicate(image_path: Path) -> bool:
+    """Check if image is a duplicate based on file hash.
+    
+    Args:
+        image_path (str): Path to the image file to check.
+        
+    Returns:
+        bool: True if the file content hash has been seen previously, False otherwise.
+    """
     if not CHECK_DUPLICATES:
         return False
         
@@ -61,15 +84,34 @@ def check_duplicate(image_path):
         return True
     return False
 
-def standardize_filename(source_name, original_filename, class_name):
-    """Create standardized filename including source information"""
+def standardize_filename(source_name: str, original_filename: str, class_name: str) -> str:
+    """Create standardized filename including original source metadata.
+    
+    Args:
+        source_name (str): The originating source collection (e.g. 'NIH', 'TBX11K').
+        original_filename (str): The initial filename string.
+        class_name (str): The clinical condition classified (e.g. 'tuberculosis').
+        
+    Returns:
+        str: A reformatted filename combining source, base name, and a unique timestamp.
+    """
     base_name = Path(original_filename).stem
     extension = Path(original_filename).suffix
     timestamp = datetime.now().strftime("%Y%m%d%H%M%S%f")[:-3]
     return f"{source_name}_{base_name}_{timestamp}{extension}"
 
-def read_image_safe(image_path, grayscale=False):
-    """Read image safely with better error handling"""
+def read_image_safe(image_path: Path, grayscale: bool = False) -> Optional[np.ndarray]:
+    """Safely construct a numpy array from an image with redundancy fallbacks.
+    
+    Attempts to read via Pillow, falling back to OpenCV if corrupted explicitly.
+    
+    Args:
+        image_path (str): The path to the image asset.
+        grayscale (bool, optional): Whether to cast the image to 1-channel grayscale. Defaults to False.
+        
+    Returns:
+        Optional[np.ndarray]: The constructed image array if successful, None otherwise.
+    """
     try:
         if grayscale:
             img = Image.open(image_path).convert('L')

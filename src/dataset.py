@@ -2,12 +2,26 @@ import random
 import math
 import numpy as np
 import torch
-from torch.utils.data import Sampler
+from torch.utils.data import Sampler, Dataset
+from typing import List, Iterator, TypeVar
+from .config import Config
 
-class TwoStreamBatchSampler(Sampler):
-    """Sampler that guarantees a specific ratio of synthetic vs real samples per batch"""
+T_co = TypeVar('T_co', covariant=True)
+
+class TwoStreamBatchSampler(Sampler[List[int]]):
+    """Sampler that guarantees a specific ratio of synthetic vs real samples per batch."""
     
-    def __init__(self, idx_syn, idx_real, batch_size, ratio_syn=0.5, drop_last=False): 
+    def __init__(self, idx_syn: List[int], idx_real: List[int], batch_size: int, ratio_syn: float = 0.5, drop_last: bool = False): 
+        """
+        Initialize the two-stream balanced random sampler.
+        
+        Args:
+            idx_syn (List[int]): Complete pool of synthetic generator inference indices.
+            idx_real (List[int]): Pool of real hospital/clinical data indices.
+            batch_size (int): Expected step length parameter.
+            ratio_syn (float, optional): Exact distribution weighting of synthetic samples. Defaults to 0.5.
+            drop_last (bool, optional): Whether to cull incomplete batches. Defaults to False.
+        """
         self.syn = idx_syn
         self.real = idx_real
         self.bs = batch_size
@@ -34,7 +48,8 @@ class TwoStreamBatchSampler(Sampler):
                f"  Real per batch: {self.k_real}\n"
                f"  Ratio: {self.k_syn / self.bs:.1%} synthetic"))
     
-    def __iter__(self):
+    def __iter__(self) -> Iterator[List[int]]:
+        """Yields balanced mixed indices randomly."""
         syn = random.sample(self.syn, len(self.syn))
         real = random.sample(self.real, len(self.real))
         
@@ -70,7 +85,7 @@ class TwoStreamBatchSampler(Sampler):
             if i_syn >= len(syn_indices) and i_real >= len(real_indices):
                 break
         
-    def __len__(self):
+    def __len__(self) -> int:
         if self.k_syn == 0 or len(self.syn) == 0:
              return math.floor(len(self.real) / self.k_real) if self.k_real > 0 else 0
         if self.k_real == 0 or len(self.real) == 0:
@@ -78,9 +93,17 @@ class TwoStreamBatchSampler(Sampler):
             
         return math.floor(min(len(self.syn)/self.k_syn, len(self.real)/self.k_real))
 
-def create_balanced_real_indices(mixed_dataset, real_indices_base, config):
-    """Create truly balanced real indices with oversampling"""
+def create_balanced_real_indices(mixed_dataset: Dataset, real_indices_base: List[int], config: Config) -> List[int]:
+    """Create truly balanced real indices using statistical oversampling over the base pool.
     
+    Args:
+        mixed_dataset (Dataset): Complete data loader source.
+        real_indices_base (List[int]): Sub-pool identifying true actuals vs synthetics.
+        config (Config): System parameters mapping num_classes and target labels.
+        
+    Returns:
+        List[int]: An oversampled, fully flat balanced distribution of valid indices.
+    """
     real_buckets = {c: [] for c in range(config.NUM_CLASSES)}
     for idx in real_indices_base:
         label = mixed_dataset.labels[idx]

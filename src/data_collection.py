@@ -3,13 +3,20 @@ import shutil
 import pandas as pd
 from pathlib import Path
 from tqdm import tqdm
+from typing import Dict, Optional, Union, Any
+
 from .utils import validate_image, check_duplicate, standardize_filename, get_image_hash, DEBUG, quality_stats
 from .config import Config
 
-collection_stats = {class_name: {} for class_name in Config.CLASS_NAMES}
-image_hashes = set()
+collection_stats: Dict[str, Dict[str, int]] = {class_name: {} for class_name in Config.CLASS_NAMES}
+image_hashes: set = set()
 
-def find_tbx11k_metadata():
+def find_tbx11k_metadata() -> Optional[str]:
+    """Locate the TBX11K metadata CSV file across known Kaggle paths.
+    
+    Returns:
+        Optional[str]: The absolute path to the metadata.csv if found, else None.
+    """
     possible_paths = [
         "/kaggle/input/tbx11k-simplified/tbx11k-simplified/data.csv",
         "/kaggle/input/tbx11k/metadata.csv",
@@ -19,6 +26,7 @@ def find_tbx11k_metadata():
     for path in possible_paths:
         if os.path.exists(path):
             return path
+            
     tbx_dirs = ["/kaggle/input/tbx11k-simplified", "/kaggle/input/tbx11k"]
     for base_dir in tbx_dirs:
         if os.path.exists(base_dir):
@@ -28,7 +36,13 @@ def find_tbx11k_metadata():
                         return os.path.join(root, file)
     return None
 
-def check_tbx11k_availability():
+def check_tbx11k_availability() -> Dict[str, Union[int, str, None]]:
+    """Verify TBX11K dataset accessibility and count samples.
+    
+    Returns:
+        Dict[str, Union[int, str, None]]: A dict containing counts for 'tb' and 'healthy', 
+        and the 'metadata_path'.
+    """
     metadata_path = find_tbx11k_metadata()
     if metadata_path and os.path.exists(metadata_path):
         df = pd.read_csv(metadata_path)
@@ -37,7 +51,19 @@ def check_tbx11k_availability():
         return {'tb': tb_count, 'healthy': healthy_count, 'metadata_path': metadata_path}
     return {'tb': 0, 'healthy': 0, 'metadata_path': None}
 
-def process_tbx11k_images(metadata_path, target_class, image_type_filter, dest_dir, limit):
+def process_tbx11k_images(metadata_path: str, target_class: str, image_type_filter: str, dest_dir: str, limit: int) -> int:
+    """Filter and copy TBX11K images according to conditions and limits.
+    
+    Args:
+        metadata_path (str): The valid filepath to the dataset labels CSV.
+        target_class (str): The final unified class name to map into (e.g. 'tuberculosis').
+        image_type_filter (str): The internal dataframe filter string matching `image_type` (e.g. 'tb').
+        dest_dir (str): The folder destination where validated images should be standardized to.
+        limit (int): Cap on the maximum amount of files to pull to preserve balance.
+        
+    Returns:
+        int: Total number of valid images successfully transferred.
+    """
     if not metadata_path or not os.path.exists(metadata_path):
         return 0
     tbx_df = pd.read_csv(metadata_path)
@@ -78,7 +104,7 @@ def process_tbx11k_images(metadata_path, target_class, image_type_filter, dest_d
                     if not os.path.exists(dest_path):
                         try:
                             shutil.copy2(img_path, dest_path)
-                            img_hash = get_image_hash(dest_path)
+                            img_hash = get_image_hash(Path(dest_path))
                             if img_hash: image_hashes.add(img_hash)
                             count += 1
                             collection_stats[target_class].setdefault('TBX11K', 0)
@@ -87,7 +113,21 @@ def process_tbx11k_images(metadata_path, target_class, image_type_filter, dest_d
             pbar.update(1)
     return count
 
-def copy_images_enhanced(source_dir, dest_dir, file_pattern="*", limit=None, desc="Copying", source_name="Unknown", class_name="unknown"):
+def copy_images_enhanced(source_dir: str, dest_dir: str, file_pattern: str = "*", limit: Optional[int] = None, desc: str = "Copying", source_name: str = "Unknown", class_name: str = "unknown") -> int:
+    """Safely copy massive directory subsets using deduplication and hash verification.
+    
+    Args:
+        source_dir (str): Relative or absolute extraction folder.
+        dest_dir (str): Unified class collection directory.
+        file_pattern (str, optional): Wildcard extension matches. Defaults to "*".
+        limit (Optional[int], optional): Maximum cap. Defaults to None.
+        desc (str, optional): Tqdm progress bar string. Defaults to "Copying".
+        source_name (str, optional): Logging provenance metadata tag. Defaults to "Unknown".
+        class_name (str, optional): Classification assignment tag. Defaults to "unknown".
+        
+    Returns:
+        int: The number of valid images correctly transferred.
+    """
     source_path = Path(source_dir)
     dest_path = Path(dest_dir)
     if not source_path.exists(): return 0
@@ -117,4 +157,3 @@ def copy_images_enhanced(source_dir, dest_dir, file_pattern="*", limit=None, des
                     except Exception: quality_stats["Copy error"] = quality_stats.get("Copy error",0) + 1
             pbar.update(1)
     return count
-
