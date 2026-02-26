@@ -40,8 +40,27 @@ The core pipeline has been abstracted out of monolithic Jupyter notebooks into a
    Config.create_dirs()
    ```
 
-3. **Running the Pipeline:**
-   The `2phase-loadmodel-completedemo.ipynb` Jupyter notebook serves as the high-level demonstration for consuming the `src/` modules. Launch the notebook and execute the cells to begin the dual-phase fine-tuning procedure.
+## Running the Pipeline:
+
+The `2phase-loadmodel-completedemo.ipynb` Jupyter notebook serves as the high-level demonstration for consuming the `src/` modules. Launch the notebook and execute the cells to begin the dual-phase fine-tuning procedure.
+
+## Dataset Instructions
+
+Because medical image datasets are massive in size, they are **not** included in this repository. You must download them manually to execute the training code.
+
+By default, the pipeline expects the datasets to be located at `/kaggle/input/` (as configured in `src/config.py`). If you are running locally, either create this mock directory structure or edit the paths in `src/config.py`.
+
+1. **TBX11K Dataset**
+   - **Download:** Search for "TBX11K" or "TBX11K Simplified" on Kaggle.
+   - **Placement:** `/kaggle/input/tbx11k-simplified/` or `/kaggle/input/tbx11k/`
+
+2. **NIH Chest X-ray Dataset**
+   - **Download:** Search for "NIH Chest X-rays" on Kaggle.
+   - **Placement:** Ensure the raw DICOM/PNG files and `Data_Entry_2017.csv` metadata file are placed under the accessible dataset path.
+
+3. **RSNA / Shenzhen Hospital / Real World Data**
+   - **Download:** Search for "Real CXR" or the respective source on Kaggle.
+   - **Placement:** `/kaggle/input/realcxr2/chest/` (as pointed to by `REAL_WORLD_PATH` in the configuration).
 
 ## Kaggle Environment Compatibility
 This pipeline was initially targeted towards Kaggle's `/kaggle/working/` directory architectures. Make sure you either run this within Kaggle, or edit the `src/config.py` paths to map appropriately to your localized `data/` setup.
