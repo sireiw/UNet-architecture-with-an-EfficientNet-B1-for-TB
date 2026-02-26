@@ -1,89 +1,215 @@
-# Tuberculosis Deep Learning Diagnosis Pipeline
+<div align="center">
 
-This repository contains a professional, modular PyTorch pipeline designed to train a highly robust model for **Tuberculosis (TB)** detection from Chest X-Rays. It employs a 3-phase training architecture emphasizing domain robustness, knowledge distillation, and "TB rescue" oversampling logic.
+# 🫁 TB-Rescue: Domain-Adaptive Tuberculosis Detection from Chest X-Rays
 
-## Abstract
+**A 3-phase deep learning pipeline for robust, cross-domain lung disease classification**
 
-**Objective:** To develop and evaluate the performance of an Artificial Intelligence (AI) system for classifying four lung conditions from chest X-rays: Normal, Tuberculosis (TB), Pneumonia, and Lung Cancer (Nodule/Mass). Performance was evaluated using statistical metrics including Accuracy, Precision, Specificity, and F1-score.
+![Python](https://img.shields.io/badge/Python-3.10+-3776AB?style=for-the-badge&logo=python&logoColor=white)
+![PyTorch](https://img.shields.io/badge/PyTorch-2.0+-EE4C2C?style=for-the-badge&logo=pytorch&logoColor=white)
+![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)
+![Status](https://img.shields.io/badge/Status-Active-brightgreen?style=for-the-badge)
 
-**Methods:** Chest X-ray images were collected from seven standard databases (NIH Chest X-ray, RSNA, VinBigData, TBX11K, NIAID, Shenzhen) and a specific dataset from Bhumibol Adulyadej Hospital. Data underwent quality control and balancing. The development process under the "TB-Rescue" framework consisted of three phases: 1) Lung Segmentation using U-Net architecture, 2) Learning from synthetic data, and 3) Fine-tuning with real-world data. Specifically, a local dataset of 286 images from Bhumibol Adulyadej Hospital (100 Normal, 73 TB, 86 Pneumonia, and 27 Lung Cancer) was utilized to adapt the model to the radiographic characteristics of Thai and Asian populations. The study integrated Knowledge Distillation techniques with advanced loss functions (CORAL Loss, Supervised Contrastive Learning) and employed 5-Fold Cross-Validation alongside mixed Data Augmentation.
+[Getting Started](#-getting-started) •
+[Architecture](#-architecture) •
+[Usage](#-usage) •
+[Results](#-key-results) •
+[Citation](#-citation)
 
-**Results:** The baseline model achieved an accuracy of 81.00% when tested on public datasets. However, when applied to clinical real-world data, significant domain shift caused accuracy to drop to 34.97%. Following the fine-tuning process, the model demonstrated significantly improved adaptation to Thai radiographic characteristics, with accuracy on real-world data increasing from 34.97% to 63.00%. Regarding Tuberculosis classification, the fine-tuned model maintained high performance, achieving an F1-Score of 0.80, a Sensitivity of 80.00%, and a Specificity of 93.00%.
+</div>
 
-**Conclusion:** While the baseline model exhibited high potential on standard datasets, its practical application was limited by domain shift. The fine-tuning process proved critical in mitigating this issue, recovering model performance for clinical application in Thailand. Despite the occurrence of catastrophic forgetting regarding public data, the model demonstrated superior domain adaptation to real-world data, which is essential for the practical deployment of AI in clinical settings.
+---
 
-**Keywords:** Artificial Intelligence, Lung Disease Classification, Chest X-ray, Tuberculosis, U-Net, EfficientNet-B1, Domain Shift, Domain Adaptation
+## 📋 Abstract
 
-## Architecture
+> **Objective:** To develop and evaluate an AI system for classifying four lung conditions from chest X-rays — **Normal**, **Tuberculosis (TB)**, **Pneumonia**, and **Lung Cancer (Nodule/Mass)** — with a focus on domain adaptation for clinical deployment in Thailand.
 
-The previous monolithic Jupyter Notebook has been fully refactored into a scalable Python package under `src/`.
+**Methods:** Images were collected from seven standard databases (NIH Chest X-ray, RSNA, VinBigData, TBX11K, NIAID, Shenzhen) plus a local dataset of **286 images from Bhumibol Adulyadej Hospital** (100 Normal, 73 TB, 86 Pneumonia, 27 Lung Cancer). The "TB-Rescue" framework consists of three phases:
+
+1. 🔬 **Lung Segmentation** — U-Net with EfficientNet-B1 encoder
+2. 📚 **Source-Domain Learning** — Train on large-scale public datasets
+3. 🏥 **Domain Adaptation** — Fine-tune with Knowledge Distillation on real clinical data
+
+The pipeline integrates CORAL Loss, Supervised Contrastive Learning, and 5-Fold Cross-Validation with mixed Data Augmentation.
+
+**Results:** Baseline accuracy dropped from **81.00% → 34.97%** due to domain shift. After fine-tuning, real-world accuracy recovered to **63.00%**, with TB classification achieving **F1=0.80**, **Sensitivity=80%**, and **Specificity=93%**.
+
+**Keywords:** `Tuberculosis` · `Chest X-ray` · `Domain Adaptation` · `U-Net` · `EfficientNet-B1` · `Knowledge Distillation`
+
+---
+
+## 🏗 Architecture
 
 ```
-.
-├── main.py                     # CLI entrypoint for the pipeline
-├── 2phase-loadmodel-completedemo.ipynb # Interactive notebook (imports from src/)
-├── requirements.txt            # Python dependencies
-├── src/
-│   ├── config.py               # Central hyperparameters and paths
-│   ├── utils.py                # Image validation & hashing
-│   ├── data/
-│   │   ├── collection.py       # Kaggle dataset acquisition (TBX11K, NIH, etc.)
-│   │   └── dataset.py          # PyTorch Datasets & Samplers
-│   ├── models/
-│   │   ├── architectures.py    # UNet Segmentation & EfficientNet-B1 Classifier
-│   │   └── losses.py           # Focal, Coral, MMD, Supervised Contrastive Losses
-│   ├── training/
-│   │   ├── engine.py           # Core training loops for Phase 1/2/3
-│   │   └── pipeline.py         # Main orchestrator
-│   └── evaluation/
-│       ├── eval_utils.py       # Metrics calculation
-│       └── visualization.py    # Grad-CAM overlays and CM matrices
+tb-rescue/
+├── main.py                         # CLI entrypoint
+├── requirements.txt                # Dependencies
+├── 2phase-loadmodel-completedemo.ipynb  # Interactive notebook
+│
+└── src/
+    ├── config.py                   # Hyperparameters & paths
+    ├── utils.py                    # Image validation & hashing
+    │
+    ├── data/
+    │   ├── collection.py           # Dataset acquisition (TBX11K, NIH, etc.)
+    │   └── dataset.py              # PyTorch Datasets & Samplers
+    │
+    ├── models/
+    │   ├── architectures.py        # U-Net Segmentation & DomainRobustClassifier
+    │   └── losses.py               # Focal, CORAL, MMD, SupCon Losses
+    │
+    ├── training/
+    │   ├── engine.py               # Core training loops (Phase 1/2/3)
+    │   └── pipeline.py             # End-to-end orchestrator
+    │
+    └── evaluation/
+        ├── eval_utils.py           # Metrics & threshold tuning
+        └── visualization.py        # Grad-CAM & confusion matrices
 ```
 
-## Setup Instructions
+---
 
-### 1. Environment Requirements
-Ensure you have Python 3.10+ and a CUDA-capable GPU (or run on Kaggle/Colab).
+## 🚀 Getting Started
+
+### Prerequisites
+
+- Python 3.10+
+- CUDA-capable GPU (recommended) or run on [Kaggle](https://kaggle.com) / [Google Colab](https://colab.research.google.com)
+
+### Installation
 
 ```bash
+# Clone the repository
+git clone https://github.com/sireiw/UNet-architecture-with-an-EfficientNet-B1-for-TB.git
+cd UNet-architecture-with-an-EfficientNet-B1-for-TB
+
+# Install dependencies
 pip install -r requirements.txt
 ```
 
-### 2. Prepare Data
-The original pipeline leverages several Kaggle datasets (NIH, TBX11K, VinBigData, JSRT, Pakistan Hospital Dataset). You can trigger the automated data scraping and preprocessing by running:
+---
+
+## 💻 Usage
+
+### Command Line Interface
 
 ```bash
+# Download & preprocess datasets
 python main.py --data
-```
 
-This will automatically assemble the datasets, check for file duplicates via MD5 hashing, validate minimum image dimensions, and organize them into `./chest_xray_4classes`.
-
-## Usage
-
-You can run the pipeline sequentially via the command line:
-
-```bash
-# 1. Run just the Full 3-Phase Training
+# Run the full 3-phase training pipeline
 python main.py --train
 
-# 2. Run just Evaluation & Visualization (assuming a trained model)
+# Evaluate & generate Grad-CAM visualizations
 python main.py --eval
 
-# 3. Run EVERYTHING End-to-End
+# Run everything end-to-end
 python main.py --all
 ```
 
-### Interactive Jupyter Notebook
+### Jupyter Notebook
 
-For interactive debugging, visualizations, and exploratory data analysis, use `2phase-loadmodel-completedemo.ipynb`. The notebook now cleanly imports from `src/` and benefits from `%autoreload 2`, allowing you to modify the underlying python package code and immediately see the results in your cells without restarting the kernel.
+For interactive exploration and visualization:
 
-## Core Features (TB Rescue Plan)
+```python
+%load_ext autoreload
+%autoreload 2
 
-- **Domain Robustness Extraction**: Removes the standard class head from EfficientNet-B1 and adds a customized Dropout+Kaiming initialization head.
-- **Advanced Loss Alignment**: Uses `coral_loss` and `mmd_loss` to align feature distributions across diverse hospital source domains.
-- **Knowledge Distillation (KD)**: Phase 3 incorporates a teacher-student KD architecture to perform gentle fine-tuning on real clinical data without catastrophic forgetting of the synthetic source.
-- **Class-Balanced Sampling**: Features a custom `TwoStreamBatchSampler` that guarantees strict ratios of real-to-synthetic data per batch, preventing domain dominance.
-- **Grad-CAM Interpretability**: Built-in support to highlight ROIs (Regions of Interest) that drove model predictions, overlaid transparently on the original X-ray images.
+from src.config import Config
+from src.training.pipeline import TBPipeline
 
-## License
-MIT License
+config = Config()
+pipeline = TBPipeline(config)
+model = pipeline.execute()
+```
+
+---
+
+## 📊 Key Results
+
+| Metric | Baseline (Public) | After Domain Shift | After Fine-tuning |
+|--------|:-----------------:|:------------------:|:-----------------:|
+| **Accuracy** | 81.00% | 34.97% | **63.00%** |
+
+### TB-Specific Performance (Post Fine-tuning)
+
+| Metric | Score |
+|--------|:-----:|
+| **F1-Score** | 0.80 |
+| **Sensitivity** | 80.00% |
+| **Specificity** | 93.00% |
+
+---
+
+## ⭐ Core Features
+
+| Feature | Description |
+|---------|-------------|
+| **Domain-Robust Classifier** | Custom EfficientNet-B1 head with Dropout + Kaiming init for cross-domain stability |
+| **CORAL + MMD Alignment** | Feature distribution alignment across diverse hospital sources |
+| **Knowledge Distillation** | Teacher-student architecture prevents catastrophic forgetting during fine-tuning |
+| **Two-Stream Sampling** | `TwoStreamBatchSampler` enforces strict real/synthetic ratios per batch |
+| **Grad-CAM Interpretability** | Visual ROI overlays showing what drives each prediction |
+| **TB-Rescue Oversampling** | Targeted oversampling to recover minority-class (TB) performance |
+
+---
+
+## 📂 Datasets
+
+This pipeline supports the following chest X-ray datasets:
+
+| Dataset | Source | Classes |
+|---------|--------|---------|
+| [NIH Chest X-ray](https://www.kaggle.com/datasets/nih-chest-xrays/data) | Kaggle | Multi-label |
+| [RSNA Pneumonia](https://www.kaggle.com/c/rsna-pneumonia-detection-challenge) | Kaggle | Normal / Pneumonia |
+| [VinBigData](https://www.kaggle.com/c/vinbigdata-chest-xray-abnormalities-detection) | Kaggle | Multi-label |
+| [TBX11K](https://www.kaggle.com/datasets/vbookshelf/tbx11k-simplified) | Kaggle | TB / Healthy |
+| [Shenzhen TB](https://lhncbc.nlm.nih.gov/LHC-downloads/downloads.html) | NIAID/NIH | TB / Normal |
+| **Bhumibol Adulyadej Hospital** | Local | 4-class (286 images) |
+
+---
+
+## 🔧 Technical Stack
+
+<div align="center">
+
+| Component | Technology |
+|-----------|-----------|
+| Segmentation | U-Net (segmentation_models_pytorch) |
+| Classification | EfficientNet-B1 (torchvision) |
+| Augmentation | Albumentations |
+| Training | PyTorch + AMP (Mixed Precision) |
+| Visualization | Matplotlib + Seaborn + Grad-CAM |
+
+</div>
+
+---
+
+## 📖 Citation
+
+If you use this work in your research, please cite:
+
+```bibtex
+@software{tb_rescue_2026,
+  author    = {sireiw},
+  title     = {TB-Rescue: Domain-Adaptive Tuberculosis Detection from Chest X-Rays},
+  year      = {2026},
+  url       = {https://github.com/sireiw/UNet-architecture-with-an-EfficientNet-B1-for-TB},
+  license   = {MIT}
+}
+```
+
+---
+
+## 📄 License
+
+This project is licensed under the [MIT License](LICENSE).
+
+---
+
+<div align="center">
+
+**Made with ❤️ for advancing TB diagnosis in Thailand**
+
+*If this project helps your research, please consider giving it a ⭐*
+
+</div>
