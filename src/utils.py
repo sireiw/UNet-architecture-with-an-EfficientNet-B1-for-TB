@@ -1,11 +1,20 @@
 import hashlib
 from pathlib import Path
 from datetime import datetime
-import pydicom
-from PIL import Image
 import numpy as np
 import cv2
 from typing import Tuple, Optional, Set, Dict
+
+# Conditionally import pydicom and PIL to avoid errors if not installed
+try:
+    import pydicom
+except ImportError:
+    pydicom = None
+
+try:
+    from PIL import Image
+except ImportError:
+    Image = None
 
 from .config import Config
 
@@ -37,7 +46,7 @@ def validate_image(image_path: Path) -> Tuple[bool, str]:
     """Validate image quality and dimension properties.
     
     Args:
-        image_path (str): Path indicating a '.dcm' dicom or standard PIL image.
+        image_path (Path): Path indicating a '.dcm' dicom or standard PIL image.
         
     Returns:
         Tuple[bool, str]: A boolean indicating validity and a descriptive status string.
@@ -45,10 +54,14 @@ def validate_image(image_path: Path) -> Tuple[bool, str]:
     global quality_stats
     try:
         if image_path.suffix.lower() in ['.dcm', '.dicom']:
+            if pydicom is None:
+                return False, "pydicom not installed"
             dicom = pydicom.dcmread(str(image_path))
             width = dicom.Columns
             height = dicom.Rows
         else:
+            if Image is None:
+                return False, "Pillow not installed"
             img = Image.open(image_path)
             width, height = img.size
             img.verify()
@@ -70,7 +83,7 @@ def check_duplicate(image_path: Path) -> bool:
     """Check if image is a duplicate based on file hash.
     
     Args:
-        image_path (str): Path to the image file to check.
+        image_path (Path): Path to the image file to check.
         
     Returns:
         bool: True if the file content hash has been seen previously, False otherwise.
@@ -106,13 +119,16 @@ def read_image_safe(image_path: Path, grayscale: bool = False) -> Optional[np.nd
     Attempts to read via Pillow, falling back to OpenCV if corrupted explicitly.
     
     Args:
-        image_path (str): The path to the image asset.
+        image_path (Path): The path to the image asset.
         grayscale (bool, optional): Whether to cast the image to 1-channel grayscale. Defaults to False.
         
     Returns:
         Optional[np.ndarray]: The constructed image array if successful, None otherwise.
     """
     try:
+        if Image is None:
+            raise ImportError("Pillow not installed")
+            
         if grayscale:
             img = Image.open(image_path).convert('L')
             img_array = np.array(img)
@@ -132,6 +148,7 @@ def read_image_safe(image_path: Path, grayscale: bool = False) -> Optional[np.nd
             else:
                 img_array = cv2.imread(str(image_path), cv2.IMREAD_COLOR)
                 if img_array is not None:
+                    # Convert BGR (OpenCV default) to RGB to match Pillow format
                     img_array = cv2.cvtColor(img_array, cv2.COLOR_BGR2RGB)
             
             if img_array is None or img_array.size == 0:
