@@ -1,86 +1,77 @@
-# Tuberculosis and Medical Image Neural Pipeline
+# Tuberculosis Deep Learning Diagnosis Pipeline
 
-## Abstract
+This repository contains a professional, modular PyTorch pipeline designed to train a highly robust model for **Tuberculosis (TB)** detection from Chest X-Rays. It employs a 3-phase training architecture emphasizing domain robustness, knowledge distillation, and "TB rescue" oversampling logic.
 
-**Objective:** To develop and evaluate the performance of an Artificial Intelligence (AI) system for classifying four lung conditions from chest X-rays: Normal, Tuberculosis (TB), Pneumonia, and Lung Cancer (Nodule/Mass). Performance was evaluated using statistical metrics including Accuracy, Precision, Specificity, and F1-score.
+## Architecture
 
-**Methods:** Chest X-ray images were collected from seven standard databases (NIH Chest X-ray, RSNA, VinBigData, TBX11K, NIAID, Shenzhen) and a specific dataset from Bhumibol Adulyadej Hospital. Data underwent quality control and balancing. The development process under the "TB-Rescue" framework consisted of three phases: 1) Lung Segmentation using U-Net architecture, 2) Learning from synthetic data, and 3) Fine-tuning with real-world data. Specifically, a local dataset of 286 images from Bhumibol Adulyadej Hospital (100 Normal, 73 TB, 86 Pneumonia, and 27 Lung Cancer) was utilized to adapt the model to the radiographic characteristics of Thai and Asian populations. The study integrated Knowledge Distillation techniques with advanced loss functions (CORAL Loss, Supervised Contrastive Learning) and employed 5-Fold Cross-Validation alongside mixed Data Augmentation.
+The previous monolithic Jupyter Notebook has been fully refactored into a scalable Python package under `src/`.
 
-**Results:** The baseline model achieved an accuracy of 81.00% when tested on public datasets. However, when applied to clinical real-world data, significant domain shift caused accuracy to drop to 34.97%. Following the fine-tuning process, the model demonstrated significantly improved adaptation to Thai radiographic characteristics, with accuracy on real-world data increasing from 34.97% to 63.00%. Regarding Tuberculosis classification, the fine-tuned model maintained high performance, achieving an F1-Score of 0.80, a Sensitivity of 80.00%, and a Specificity of 93.00%.
-
-**Conclusion:** While the baseline model exhibited high potential on standard datasets, its practical application was limited by domain shift. The fine-tuning process proved critical in mitigating this issue, recovering model performance for clinical application in Thailand. Despite the occurrence of catastrophic forgetting regarding public data, the model demonstrated superior domain adaptation to real-world data, which is essential for the practical deployment of AI in clinical settings.
-
-**Keywords:** Artificial Intelligence, Lung Disease Classification, Chest X-ray, Tuberculosis, U-Net, EfficientNet-B1, Domain Shift, Domain Adaptation
-
----
-
-This project contains a professional and modular deep learning pipeline for processing medical imaging datasets, specialized for the classification and segmentation of Tuberculosis, Pneumonia, Lung Cancer, and "Normal" Chest X-Rays. It is designed around the principles of DRY (Don't Repeat Yourself), single responsibility, and readability.
-
-## Features
-
-- **Modular Architecture**: Code is split up cleanly into configuration, utilities, dataset processing, modeling, losses, and training logic.
-- **Robust Pipeline**: Includes features like Adaptive Batch Norm, Exponential Moving Averages (EMA), Knowledge Distillation, and Two-Stream Class Balancing.
-- **Specialized Losses**: Implements Class-Balanced Focal Loss, CORAL Loss, Maximum Mean Discrepancy (MMD) Loss, Supervised Contrastive Loss, Dice Loss, and Label Smoothing.
-- **Data Engineering**: Contains specialized scripts for processing massive datasets such as TBX11K, NIH Chest X-rays, RSNA, and Shenzhen Hospital datasets, with robust dataset availability checks and duplicate prevention using MD5 hashing.
-
-## File Structure
-
-The core pipeline has been abstracted out of monolithic Jupyter notebooks into a professional Python package (`src/`):
-
-```text
+```
+.
+├── main.py                     # CLI entrypoint for the pipeline
+├── 2phase-loadmodel-completedemo.ipynb # Interactive notebook (imports from src/)
+├── requirements.txt            # Python dependencies
 ├── src/
-│   ├── config.py           # Configuration parameters and path routing
-│   ├── data_collection.py  # Dataset compilation, resizing, and preparation
-│   ├── dataset.py          # PyTorch dataset logic and Two-Stream Samplers
-│   ├── losses.py           # Advanced custom loss functions
-│   ├── models.py           # EMA wrapping and Architecture calibrations
-│   ├── train.py            # Logic for model training and TTA inference
-│   └── utils.py            # IO functions, duplicate checks, hashing
-├── 2phase-loadmodel-completedemo.ipynb  # Clean, high-level notebook
-├── requirements.txt        # Package dependencies
-└── README.md               # Project documentation
+│   ├── config.py               # Central hyperparameters and paths
+│   ├── utils.py                # Image validation & hashing
+│   ├── data/
+│   │   ├── collection.py       # Kaggle dataset acquisition (TBX11K, NIH, etc.)
+│   │   └── dataset.py          # PyTorch Datasets & Samplers
+│   ├── models/
+│   │   ├── architectures.py    # UNet Segmentation & EfficientNet-B1 Classifier
+│   │   └── losses.py           # Focal, Coral, MMD, Supervised Contrastive Losses
+│   ├── training/
+│   │   ├── engine.py           # Core training loops for Phase 1/2/3
+│   │   └── pipeline.py         # Main orchestrator
+│   └── evaluation/
+│       ├── eval_utils.py       # Metrics calculation
+│       └── visualization.py    # Grad-CAM overlays and CM matrices
 ```
 
-## Quick Start
+## Setup Instructions
 
-1. **Install dependencies:**
-   ```bash
-   pip install -r requirements.txt
-   ```
-2. **Setup Directories:**
-   You can initialize the required output and processing directory structure dynamically via the python module:
-   ```python
-   from src.config import Config
-   Config.create_dirs()
-   ```
+### 1. Environment Requirements
+Ensure you have Python 3.10+ and a CUDA-capable GPU (or run on Kaggle/Colab).
 
-## Running the Pipeline:
+```bash
+pip install -r requirements.txt
+```
 
-The `2phase-loadmodel-completedemo.ipynb` Jupyter notebook serves as the high-level demonstration for consuming the `src/` modules. Launch the notebook and execute the cells to begin the dual-phase fine-tuning procedure.
+### 2. Prepare Data
+The original pipeline leverages several Kaggle datasets (NIH, TBX11K, VinBigData, JSRT, Pakistan Hospital Dataset). You can trigger the automated data scraping and preprocessing by running:
 
-## Data Requirements
+```bash
+python main.py --data
+```
 
-Because medical image datasets are massive in size, they are **not** included in this repository. You must download them manually to execute the training code.
+This will automatically assemble the datasets, check for file duplicates via MD5 hashing, validate minimum image dimensions, and organize them into `./chest_xray_4classes`.
 
-By default, the pipeline expects the datasets to be located at `/kaggle/input/` (as configured in `src/config.py`). If you are running locally, either create this mock directory structure or edit the paths in `src/config.py`.
+## Usage
 
-1. **TBX11K Dataset**
-   - **Download:** [TBX11K Simplified on Kaggle](https://www.kaggle.com/datasets/vuppalaadithyasairam/tbx11k-simplified)
-   - **Placement:** `/kaggle/input/tbx11k-simplified/` or `/kaggle/input/tbx11k/`
+You can run the pipeline sequentially via the command line:
 
-2. **NIH Chest X-ray Dataset**
-   - **Download:** [NIH Chest X-rays on Kaggle](https://www.kaggle.com/datasets/nih-chest-xrays/data)
-   - **Placement:** Ensure the raw DICOM/PNG files and `Data_Entry_2017.csv` metadata file are placed under the accessible dataset path.
+```bash
+# 1. Run just the Full 3-Phase Training
+python main.py --train
 
-3. **RSNA / Shenzhen Hospital / Real World Data**
-   - **Download:** [RSNA Pneumonia Detection Challenge](https://www.kaggle.com/c/rsna-pneumonia-detection-challenge/data) or local hospital datasets.
-   - **Placement:** `/kaggle/input/realcxr2/chest/` (as pointed to by `REAL_WORLD_PATH` in the configuration).
+# 2. Run just Evaluation & Visualization (assuming a trained model)
+python main.py --eval
 
-## Kaggle Environment Compatibility
-This pipeline was initially targeted towards Kaggle's `/kaggle/working/` directory architectures. Make sure you either run this within Kaggle, or edit the `src/config.py` paths to map appropriately to your localized `data/` setup.
+# 3. Run EVERYTHING End-to-End
+python main.py --all
+```
 
-## Code Review
-The pipeline enforces:
-- Meaningful variable names.
-- Clean module structures avoiding long script files.
-- Avoiding redundancy via functional encapsulation.
+### Interactive Jupyter Notebook
+
+For interactive debugging, visualizations, and exploratory data analysis, use `2phase-loadmodel-completedemo.ipynb`. The notebook now cleanly imports from `src/` and benefits from `%autoreload 2`, allowing you to modify the underlying python package code and immediately see the results in your cells without restarting the kernel.
+
+## Core Features (TB Rescue Plan)
+
+- **Domain Robustness Extraction**: Removes the standard class head from EfficientNet-B1 and adds a customized Dropout+Kaiming initialization head.
+- **Advanced Loss Alignment**: Uses `coral_loss` and `mmd_loss` to align feature distributions across diverse hospital source domains.
+- **Knowledge Distillation (KD)**: Phase 3 incorporates a teacher-student KD architecture to perform gentle fine-tuning on real clinical data without catastrophic forgetting of the synthetic source.
+- **Class-Balanced Sampling**: Features a custom `TwoStreamBatchSampler` that guarantees strict ratios of real-to-synthetic data per batch, preventing domain dominance.
+- **Grad-CAM Interpretability**: Built-in support to highlight ROIs (Regions of Interest) that drove model predictions, overlaid transparently on the original X-ray images.
+
+## License
+MIT License
